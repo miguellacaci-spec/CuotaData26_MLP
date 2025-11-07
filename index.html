@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Fútbol App ⚽</title>
+  <style>
+    body { font-family: Arial; text-align: center; background: #f2f2f2; }
+    h1 { color: #0a66c2; }
+    .match { background: white; margin: 10px auto; padding: 10px; border-radius: 10px; width: 80%; max-width: 400px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+  </style>
+</head>
+<body>
+  <h1>📅 Próximos partidos</h1>
+  <div id="matches"></div>
+
+  <script>
+    const partidos = [
+      {fecha: "2025-11-10", local: "Real Madrid", visitante: "Barcelona", resultado: "2 - 1"},
+      {fecha: "2025-11-11", local: "Atlético", visitante: "Sevilla", resultado: null}
+    ];
+
+    const div = document.getElementById("matches");
+    partidos.forEach(p => {
+      const m = document.createElement("div");
+      m.className = "match";
+      m.innerHTML = `<b>${p.local}</b> vs <b>${p.visitante}</b><br>${p.fecha}<br>${p.resultado ? "Resultado: " + p.resultado : "Pendiente"}`;
+      div.appendChild(m);
+    });
+  </script>
+</body>
+</html>
