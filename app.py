@@ -142,4 +142,4 @@ def logout():
 @app.route('/')
 def home():
     if current_user.is_authenticated:
-        return redirect('/
+        return redirect('/')
