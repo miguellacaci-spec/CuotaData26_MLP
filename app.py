@@ -37,7 +37,8 @@ class MatchNote(db.Model):
     comment = db.Column(db.Text)
     created_by = db.Column(db.String(120))
 
-db.create_all()
+with app.app_context():
+    db.create_all()
 
 ### HELPERS para APIs y AIs (PLUG: sustituir con tus keys)
 def fetch_fixtures_from_provider(params):
