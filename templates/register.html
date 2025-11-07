@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h2 class="mb-3">Crear cuenta</h2>
+    <form method="POST" action="/register">
+      <div class="mb-3"><input class="form-control" name="username" placeholder="Usuario" required></div>
+      <div class="mb-3"><input class="form-control" name="password" type="password" placeholder="Contraseña" required></div>
+      <button class="btn btn-primary w-100">Crear cuenta</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
