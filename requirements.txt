@@ -1,7 +1,8 @@
 flask
+flask_sqlalchemy
+gunicorn
 pandas
 openpyxl
-gunicorn
 requests
 python-dotenv
-flask_sqlalchemy
+
