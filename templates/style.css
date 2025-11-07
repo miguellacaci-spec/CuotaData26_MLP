@@ -1,0 +1,16 @@
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+h1, h2 {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+}
