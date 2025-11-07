@@ -1,1 +1,0 @@
-# CuotaData26_MLP
