@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Partido</title></head>
+<body>
+  <a href="/">Volver</a>
+  <h1>{{ match.home }} vs {{ match.away }} — {{ match.date }}</h1>
+
+  <h3>Últimos 5 resultados (Home)</h3>
+  <p>
+  {% for r in last5_home %}
+    {{ r[0] }} ({{ r[1] }}) &nbsp;
+  {% endfor %}
+  </p>
+
+  <h3>Últimos 5 resultados (Away)</h3>
+  <p>
+  {% for r in last5_away %}
+    {{ r[0] }} ({{ r[1] }}) &nbsp;
+  {% endfor %}
+  </p>
+
+  <h3>Cuotas actuales</h3>
+  <ul>
+    <li>Local: {{ odds.home }}</li>
+    <li>Empate: {{ odds.draw }}</li>
+    <li>Visitante: {{ odds.away }}</li>
+  </ul>
+
+  <h3>Probabilidades (IA/estudio)</h3>
+  <ul>
+    <li>Local: {{ probs.home }}%</li>
+    <li>Empate: {{ probs.draw }}%</li>
+    <li>Visitante: {{ probs.away }}%</li>
+  </ul>
+
+  <h3>Comentarios</h3>
+  <p>{{ match.comment }}</p>
+</body>
+</html>
