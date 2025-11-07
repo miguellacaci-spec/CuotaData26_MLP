@@ -33,7 +33,6 @@ def init_db():
         conn.commit()
 
 
-# -------------------- FUNCIONES AUXILIARES --------------------
 def get_user_id():
     if "user" in session:
         with sqlite3.connect("database.db") as conn:
@@ -49,7 +48,6 @@ def ordenar_posiciones(jugadores):
     return sorted(jugadores, key=lambda x: orden.index(x[1]) if x[1] in orden else 99)
 
 
-# -------------------- RUTAS --------------------
 @app.route('/')
 def home():
     if "user" in session:
@@ -57,7 +55,6 @@ def home():
     return redirect(url_for("login"))
 
 
-# ----- REGISTRO -----
 @app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -76,7 +73,6 @@ def register():
     return render_template("register.html")
 
 
-# ----- LOGIN -----
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -101,7 +97,6 @@ def logout():
     return redirect(url_for("login"))
 
 
-# ----- MODO CARRERA -----
 @app.route('/modo_carrera', methods=["GET", "POST"])
 def modo_carrera():
     user_id = get_user_id()
@@ -117,7 +112,6 @@ def modo_carrera():
     return render_template("modo_carrera.html", jugadores=jugadores)
 
 
-# ----- AÑADIR JUGADOR -----
 @app.route('/add_player', methods=["POST"])
 def add_player():
     user_id = get_user_id()
@@ -139,7 +133,6 @@ def add_player():
     return redirect(url_for("modo_carrera"))
 
 
-# ----- INFORMACIÓN DE PARTIDOS -----
 @app.route('/update_stats', methods=["POST"])
 def update_stats():
     player_id = request.form["player_id"]
@@ -159,7 +152,6 @@ def update_stats():
     return redirect(url_for("modo_carrera"))
 
 
-# ----- ACTUALIZAR FINANZAS -----
 @app.route('/update_finanzas', methods=["POST"])
 def update_finanzas():
     player_id = request.form["player_id"]
@@ -175,7 +167,6 @@ def update_finanzas():
     return redirect(url_for("modo_carrera"))
 
 
-# ----- ELIMINAR JUGADOR -----
 @app.route('/delete_player/<int:id>')
 def delete_player(id):
     with sqlite3.connect("database.db") as conn:
@@ -187,4 +178,5 @@ def delete_player(id):
 
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
