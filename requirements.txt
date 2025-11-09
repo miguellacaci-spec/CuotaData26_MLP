@@ -1,1 +1,4 @@
-Flask, werkzeug, sqlite3, gunicorn
+Flask
+werkzeug
+sqlite3
+gunicorn
