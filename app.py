@@ -1,13 +1,16 @@
 from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session
 import sqlite3, os
 from werkzeug.security import generate_password_hash, check_password_hash
-from init_db import init_db # Importamos la función de inicialización
+# NOTA: Ya no importamos 'init_db' aquí porque Render lo ejecuta por separado.
 
 app = Flask(__name__)
-app.secret_key = "clave_super_segura_y_larga_para_la_session"
+# ¡IMPORTANTE! Cambia esta clave secreta a algo largo y complejo antes de desplegar en producción.
+app.secret_key = "clave_super_segura_y_larga_para_la_session" 
 
-# --- Función auxiliar ---
+# --- Función auxiliar para la conexión a la base de datos ---
 def get_db_connection():
+    # Render usa el archivo data.db que fue creado en la fase de "Build"
     conn = sqlite3.connect('data.db')
     conn.row_factory = sqlite3.Row
     return conn
@@ -125,11 +128,7 @@ def partidos():
         return redirect('/login')
     return render_template('partidos.html')
 
-# --- Ejecución Local ---
+# --- Ejecución Local / Producción ---
 if __name__ == '__main__':
-    # ⚠️ MUY IMPORTANTE: Antes de iniciar la app, comprueba si la DB existe y la crea si es necesario.
-    if not os.path.exists('data.db'):
-        print("La base de datos 'data.db' no existe. Inicializando...")
-        init_db() # Llama a la función importada
-        
+    # Usado solo para desarrollo local, ignorado por Gunicorn en Render
     app.run(host='0.0.0.0', port=5000, debug=True)
