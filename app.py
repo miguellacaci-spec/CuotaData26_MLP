@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3, os
 from werkzeug.security import generate_password_hash, check_password_hash
+from init_db import init_db # Importamos la función de inicialización
 
 app = Flask(__name__)
 app.secret_key = "clave_super_segura_y_larga_para_la_session"
@@ -126,7 +127,9 @@ def partidos():
 
 # --- Ejecución Local ---
 if __name__ == '__main__':
-    # Check for DB existence and create it if necessary
+    # ⚠️ MUY IMPORTANTE: Antes de iniciar la app, comprueba si la DB existe y la crea si es necesario.
     if not os.path.exists('data.db'):
-        import init_db
+        print("La base de datos 'data.db' no existe. Inicializando...")
+        init_db() # Llama a la función importada
+        
     app.run(host='0.0.0.0', port=5000, debug=True)
