@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Modo Carrera - Fútbol AI</title>
+</head>
+<body>
+    <h2>Modo Carrera</h2>
+    <form method="POST">
+        <label>Posición:</label>
+        <select name="position" required>
+            <option value="POR">POR</option>
+            <option value="LI">LI</option>
+            <option value="CAI">CAI</option>
+            <option value="DFC">DFC</option>
+            <option value="LD">LD</option>
+            <option value="CAD">CAD</option>
+            <option value="MCD">MCD</option>
+            <option value="MC">MC</option>
+            <option value="MCO">MCO</option>
+            <option value="MI">MI</option>
+            <option value="MD">MD</option>
+            <option value="EI">EI</option>
+            <option value="DC">DC</option>
+            <option value="SD">SD</option>
+            <option value="ED">ED</option>
+        </select><br>
+        <input type="text" name="name" placeholder="Nombre" required><br>
+        <input type="number" name="age" placeholder="Edad" required><br>
+        <input type="text" name="nationality" placeholder="Nacionalidad" required><br>
+        <input type="number" name="grl" placeholder="GRL (1-99)" min="1" max="99" required><br>
+        <input type="text" name="market_value" placeholder="Valor de mercado (ej: 15.000.000 €)" required><br>
+        <input type="text" name="salary" placeholder="Sueldo (ej: 850.000 €)" required><br>
+        <button type="submit">Añadir jugador</button>
+    </form>
+
+    <h3>Plantilla</h3>
+    <table border="1">
+        <tr>
+            <th>Posición</th><th>Nombre</th><th>Edad</th><th>Nacionalidad</th><th>GRL</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>Valor</th><th>Sueldo</th>
+        </tr>
+        {% for p in players %}
+        <tr>
+            <td>{{p['position']}}</td>
+            <td>{{p['name']}}</td>
+            <td>{{p['age']}}</td>
+            <td>{{p['nationality']}}</td>
+            <td>{{p['grl']}}</td>
+            <td>{{p['matches']}}</td>
+            <td>{{p['goals']}}</td>
+            <td>{{p['assists']}}</td>
+            <td>{{p['market_value']}}</td>
+            <td>{{p['salary']}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
