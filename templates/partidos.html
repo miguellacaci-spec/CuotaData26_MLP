@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Partidos{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-2xl text-center">
+    <h1 class="text-4xl font-extrabold text-gray-900 mb-6">Próximos Partidos</h1>
+
+    <div class="max-w-xl mx-auto">
+        <div class="bg-gray-100 p-6 rounded-xl shadow-inner border border-gray-200">
+            <div class="text-yellow-600 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <p class="text-gray-700 text-lg">Esta sección está en desarrollo.</p>
+            <p class="text-gray-500 mt-2">Pronto podrás simular partidos, gestionar alineaciones y ver el calendario de tu temporada.</p>
+        </div>
+        
+        <a href="/modo_carrera" class="mt-6 inline-block px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-200">
+            Volver a la Gestión de Plantilla
+        </a>
+    </div>
+</div>
+{% endblock %}
