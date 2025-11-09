@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3, os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "clave_super_segura"
+app.secret_key = "clave_super_segura_y_larga_para_la_session"
 
 # --- Función auxiliar ---
 def get_db_connection():
@@ -15,40 +16,59 @@ def get_db_connection():
 def home():
     if 'user_id' not in session:
         return redirect('/login')
-    return render_template('home.html')
+    
+    conn = get_db_connection()
+    user = conn.execute("SELECT username FROM users WHERE id=?", (session['user_id'],)).fetchone()
+    conn.close()
+
+    return render_template('home.html', username=user['username'] if user else 'Manager')
 
 # --- Registro ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    error = None
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        
+        # Seguridad: Hashing de la contraseña antes de guardarla
+        hashed_password = generate_password_hash(password)
+        
         conn = get_db_connection()
         try:
-            conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+            conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
             conn.commit()
         except sqlite3.IntegrityError:
+            error = "❌ El nombre de usuario ya existe. Por favor, elige otro."
+        finally:
             conn.close()
-            return "❌ Usuario ya existe."
-        conn.close()
-        return redirect('/login')
-    return render_template('register.html')
+        
+        if not error:
+            return redirect('/login')
+            
+    return render_template('register.html', error=error)
 
 # --- Login ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         conn = get_db_connection()
-        user = conn.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password)).fetchone()
+        
+        # 1. Buscamos al usuario por el nombre de usuario y obtenemos su hash
+        user = conn.execute("SELECT id, password FROM users WHERE username=?", (username,)).fetchone()
         conn.close()
-        if user:
+
+        # 2. Verificamos si el usuario existe y si la contraseña coincide con el hash almacenado
+        if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             return redirect('/')
         else:
-            return "❌ Usuario o contraseña incorrectos"
-    return render_template('login.html')
+            error = "❌ Usuario o contraseña incorrectos"
+            
+    return render_template('login.html', error=error)
 
 # --- Logout ---
 @app.route('/logout')
@@ -63,25 +83,39 @@ def modo_carrera():
         return redirect('/login')
 
     conn = get_db_connection()
+    message = None 
 
     if request.method == 'POST':
-        position = request.form['position']
-        name = request.form['name']
-        age = request.form['age']
-        nationality = request.form['nationality']
-        grl = int(request.form['grl'])
-        market_value = request.form['market_value']
-        salary = request.form['salary']
+        try:
+            position = request.form['position']
+            name = request.form['name']
+            # Intentamos convertir a entero. Esto puede fallar si el usuario introduce texto.
+            age = int(request.form['age'])
+            nationality = request.form['nationality']
+            grl = int(request.form['grl'])
+            market_value = request.form['market_value']
+            salary = request.form['salary']
 
-        conn.execute('''
-            INSERT INTO players (user_id, position, name, age, nationality, grl, market_value, salary)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (session['user_id'], position, name, age, nationality, grl, market_value, salary))
-        conn.commit()
+            conn.execute('''
+                INSERT INTO players (user_id, position, name, age, nationality, grl, market_value, salary)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (session['user_id'], position, name, age, nationality, grl, market_value, salary))
+            conn.commit()
+            message = "✅ Jugador añadido exitosamente."
+        except ValueError:
+            # Capturamos el error si 'age' o 'grl' no son números válidos
+            message = "⚠️ Error: La Edad y el GRL deben ser números enteros válidos."
+        except Exception as e:
+            # Error genérico de base de datos u otro
+            message = f"❌ Error al añadir jugador: {str(e)}"
+            print(f"Error adding player: {e}")
 
-    players = conn.execute('SELECT * FROM players WHERE user_id=?', (session['user_id'],)).fetchall()
+
+    # Fetch players for the current user, ordered by GRL
+    players = conn.execute('SELECT * FROM players WHERE user_id=? ORDER BY grl DESC, name ASC', (session['user_id'],)).fetchall()
     conn.close()
-    return render_template('modo_carrera.html', players=players)
+    
+    return render_template('modo_carrera.html', players=players, message=message)
 
 # --- Partidos ---
 @app.route('/partidos')
@@ -90,8 +124,9 @@ def partidos():
         return redirect('/login')
     return render_template('partidos.html')
 
-# --- Render fix ---
+# --- Ejecución Local ---
 if __name__ == '__main__':
+    # Check for DB existence and create it if necessary
     if not os.path.exists('data.db'):
         import init_db
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
