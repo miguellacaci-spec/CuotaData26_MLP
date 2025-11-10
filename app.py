@@ -5,15 +5,21 @@ import os
 app = Flask(__name__)
 app.secret_key = "clave_secreta_segura"
 
-# Configuración base de datos (SQLite local, compatible con Render)
+# =========================================
+# CONFIGURACIÓN BASE DE DATOS
+# =========================================
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jugadores.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
 # =========================================
-# MODELO DE DATOS
+# MODELOS
 # =========================================
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario = db.Column(db.String(100), nullable=False, unique=True)
+    contraseña = db.Column(db.String(100), nullable=False)
+
 class Jugador(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
@@ -31,44 +37,77 @@ with app.app_context():
 def home():
     return render_template('home.html')
 
+# =========================================
+# LOGIN
+# =========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         usuario = request.form['usuario']
         contraseña = request.form['contraseña']
-        # Aquí pondrías tu validación de usuario real
-        if usuario == "admin" and contraseña == "admin":
+
+        user = Usuario.query.filter_by(usuario=usuario).first()
+        if user and user.contraseña == contraseña:
             session['usuario'] = usuario
+            flash("Inicio de sesión exitoso", "success")
             return redirect(url_for('modo_carrera'))
         else:
             flash("Usuario o contraseña incorrectos", "error")
+            return redirect(url_for('login'))
+
     return render_template('login.html')
 
+# =========================================
+# REGISTRO
+# =========================================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         usuario = request.form['usuario']
         contraseña = request.form['contraseña']
-        # Aquí podrías guardar el usuario si tienes un modelo de usuarios
+
+        # Evitar duplicados
+        existente = Usuario.query.filter_by(usuario=usuario).first()
+        if existente:
+            flash("El nombre de usuario ya existe. Prueba con otro.", "error")
+            return redirect(url_for('register'))
+
+        nuevo_usuario = Usuario(usuario=usuario, contraseña=contraseña)
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+
         flash("Registro completado con éxito. Ahora puedes iniciar sesión.", "success")
         return redirect(url_for('login'))
+
     return render_template('register.html')
 
+# =========================================
+# CERRAR SESIÓN
+# =========================================
 @app.route('/logout')
 def logout():
     session.pop('usuario', None)
+    flash("Sesión cerrada correctamente", "success")
     return redirect(url_for('home'))
 
 # =========================================
-# MODO CARRERA - CRUD DE JUGADORES
+# MODO CARRERA - CRUD JUGADORES
 # =========================================
 @app.route('/modo_carrera')
 def modo_carrera():
+    if 'usuario' not in session:
+        flash("Debes iniciar sesión para acceder al modo carrera", "error")
+        return redirect(url_for('login'))
+
     jugadores = Jugador.query.all()
     return render_template('modo_carrera.html', jugadores=jugadores)
 
 @app.route('/agregar_jugador', methods=['GET', 'POST'])
 def agregar_jugador():
+    if 'usuario' not in session:
+        flash("Debes iniciar sesión", "error")
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         nombre = request.form['nombre']
         posicion = request.form['posicion']
@@ -83,9 +122,6 @@ def agregar_jugador():
 
     return render_template('agregar_jugador.html')
 
-# =========================================
-# ELIMINAR JUGADOR (ARREGLADO PARA RENDER)
-# =========================================
 @app.route('/eliminar/<int:id>', methods=['POST'])
 def eliminar(id):
     jugador = Jugador.query.get(id)
@@ -97,9 +133,6 @@ def eliminar(id):
         flash("Jugador no encontrado", "error")
     return redirect(url_for('modo_carrera'))
 
-# =========================================
-# MODIFICAR JUGADOR (ARREGLADO PARA RENDER)
-# =========================================
 @app.route('/modificar/<int:id>', methods=['GET', 'POST'])
 def modificar(id):
     jugador = Jugador.query.get(id)
@@ -119,7 +152,7 @@ def modificar(id):
     return render_template('modificar_jugador.html', jugador=jugador)
 
 # =========================================
-# PARTIDOS (opcional, ejemplo)
+# PARTIDOS
 # =========================================
 @app.route('/partidos')
 def partidos():
@@ -130,3 +163,4 @@ def partidos():
 # =========================================
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
