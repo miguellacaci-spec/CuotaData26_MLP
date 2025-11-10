@@ -157,13 +157,14 @@ def modo_carrera():
     if request.method == 'POST':
         # Lógica para Añadir Jugador (POST)
         try:
-            nombre = request.form['name'] # Nota: el form del HTML usa 'name'
+            nombre = request.form['name'] 
             posicion = request.form['position']
-            grl = request.form['grl'] # media -> grl
-            edad = request.form['age'] # nuevo campo
-            market_value = request.form['market_value'] # valor -> market_value
+            grl = request.form['grl'] 
+            edad = request.form['age'] 
+            market_value = request.form['market_value'] 
             salary = request.form['salary'] 
-            # nuevo campo
+            
+            # **NOTA DE ROBUSTEZ:** Envoltura explícita de int() para asegurar que los campos son numéricos
             nuevo_jugador = Jugador(
                 user_id=user_id,
                 nombre=nombre, 
@@ -177,32 +178,40 @@ def modo_carrera():
             db.session.commit()
             message = "✅ Jugador agregado correctamente."
 
+        except ValueError:
+            # Captura si 'grl' o 'edad' no son números (el error más común)
+            db.session.rollback()
+            message = "❌ Error de datos: GRL y Edad deben ser números enteros válidos."
         except Exception as e:
             db.session.rollback()
-            # Muestra el error de forma más estética
-            message = f"❌ Error: No se pudo agregar el jugador. Por favor, revisa los datos."
+            # Captura cualquier otro error de base de datos o interno
+            message = f"❌ Error interno: No se pudo agregar el jugador. {e}"
             
     # Lógica para Mostrar Jugadores (GET)
-    # Solo carga jugadores del usuario logueado
-    jugadores = Jugador.query.filter_by(user_id=user_id).all()
-    # Aplicamos la ordenación personalizada ANTES de renderizar la plantilla
-    jugadores_ordenados = ordenar_jugadores(jugadores)
-    # Pasamos una lista de diccionarios para mayor compatibilidad con Jinja
-    players_data = [{
-        'id': p.id,
-        'name': p.nombre,
-        'position': p.posicion,
-        'grl': p.grl,
-        'age': p.edad,
-        'market_value': p.market_value,
-        'salary': p.salary} for p in jugadores_ordenados]
+    try:
+        jugadores = Jugador.query.filter_by(user_id=user_id).all()
+        jugadores_ordenados = ordenar_jugadores(jugadores)
         
-    return render_template('modo_carrera.html', players=players_data, message=message, username=session.get('usuario', 'Manager'))
+        # Generamos los datos de la forma más robusta posible
+        players_data = [{
+            'id': p.id,
+            'name': p.nombre,
+            'position': p.posicion,
+            'grl': p.grl,
+            'age': p.edad,
+            'market_value': p.market_value,
+            'salary': p.salary} for p in jugadores_ordenados]
+            
+        return render_template('modo_carrera.html', players=players_data, message=message, username=session.get('usuario', 'Manager'))
+    except Exception as e:
+        # Esto captura errores al acceder a la DB (ej. tabla corrupta)
+        flash(f"❌ Error al cargar la plantilla. La base de datos no está disponible. Intenta registrarte de nuevo.", "error")
+        print(f"Database Load Error: {e}")
+        return redirect(url_for('home'))
 
 # ----------------------------------------------------
-# NUEVAS RUTAS PARA MODIFICAR Y ELIMINAR (SOLUCIÓN 404)
+# RUTAS DE ACCIONES CRUD
 # ----------------------------------------------------
-# Corregida la sintaxis de la ruta para Flask: de '/int:player_id' a '/<int:player_id>'
 @app.route('/eliminar_jugador/<int:player_id>', methods=['POST'])
 def eliminar_jugador(player_id):
     if 'user_id' not in session:
@@ -218,7 +227,6 @@ def eliminar_jugador(player_id):
         flash("⚠️ Jugador no encontrado o no autorizado.", "error")
     return redirect(url_for('modo_carrera'))
 
-# Corregida la sintaxis de la ruta para Flask: de '/int:player_id' a '/<int:player_id>'
 @app.route('/actualizar_jugador/<int:player_id>', methods=['POST'])
 def actualizar_jugador(player_id):
     if 'user_id' not in session:
@@ -237,6 +245,9 @@ def actualizar_jugador(player_id):
             
             db.session.commit()  
             flash(f"✅ Jugador {jugador.nombre} modificado correctamente.", "success")
+        except ValueError:
+            db.session.rollback()
+            flash("❌ Error de datos: GRL y Edad deben ser números enteros válidos.", "error")
         except Exception as e:
             db.session.rollback()
             flash(f"❌ Error al modificar el jugador: {e}. Revisa los datos.", "error")
@@ -250,8 +261,6 @@ def finalizar_plantilla():
         flash("❌ Debes iniciar sesión para realizar esta acción", "error")
         return redirect(url_for('login'))
 
-    # Lógica de servidor para registrar la plantilla como "Temporada 1"
-    # Aquí podrías guardar una copia de la plantilla actual o cambiar un estado del usuario.
     flash("🎉 ¡Plantilla completada! Registrada como Temporada 1.", "success")
     return redirect(url_for('modo_carrera'))
 
