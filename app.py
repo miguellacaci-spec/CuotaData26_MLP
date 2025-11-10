@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session 
 from flask_sqlalchemy import SQLAlchemy 
-from werkzeug.security import generate_password_hash, check_password_hash # Para contraseñas seguras 
-import os # Necesario para leer variables de entorno (DATABASE_URL)
-from sqlalchemy.exc import OperationalError, SQLAlchemyError # Importamos para manejo de errores de DB
+from werkzeug.security import generate_password_hash, check_password_hash
+import os 
+from sqlalchemy.exc import OperationalError, SQLAlchemyError 
 
 app = Flask(__name__)
 # Usamos una clave secreta para la gestión de sesiones
@@ -12,17 +12,17 @@ app.secret_key = "clave_secreta_super_segura_2024_proyectoflask"
 # CONFIGURACIÓN BASE DE DATOS (POSTGRESQL / SQLITE)
 # =========================================
 
-# 1. Intentamos leer la URL de la base de datos desde una variable de entorno (Render)
+# Lee la URL de la base de datos de la variable de entorno de Render
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
-    # Si es PostgreSQL, SQLAlchemy a veces necesita el esquema 'postgres://' cambiado a 'postgresql://'
+    # Corrección de esquema para SQLAlchemy (convierte postgres:// a postgresql://)
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 else:
-    # Modo de desarrollo local con SQLite (solo si no hay DATABASE_URL)
+    # Usar SQLite si no se encuentra la variable de entorno (solo para desarrollo local)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///manager_career.db' 
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
@@ -34,8 +34,8 @@ db = SQLAlchemy(app)
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario = db.Column(db.String(100), nullable=False, unique=True)
-    contraseña_hash = db.Column(db.String(128), nullable=False)
-    # Definimos la relación con la tabla Jugador
+    # CORRECCIÓN VITAL: Aumentado a 256 para el hash seguro de Scrypt
+    contraseña_hash = db.Column(db.String(256), nullable=False) 
     jugadores = db.relationship('Jugador', backref='manager', lazy=True)
 
     def set_password(self, password):
@@ -48,7 +48,6 @@ class Usuario(db.Model):
 
 class Jugador(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # Clave foránea que enlaza al usuario que creó el jugador
     user_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
     posicion = db.Column(db.String(50), nullable=False)
@@ -57,9 +56,8 @@ class Jugador(db.Model):
     market_value = db.Column(db.String(50), nullable=False)
     salary = db.Column(db.String(50), nullable=False)
 
-# Asegura que las tablas se creen al inicio, esencial para la primera ejecución en Render
+# Asegura que las tablas se creen al inicio
 with app.app_context():
-    # Nota: Si ya tienes datos, este comando simplemente verifica que las tablas existen.
     db.create_all()
 
 # =========================================
@@ -73,7 +71,6 @@ POSICION_ORDEN = {
 
 def ordenar_jugadores(jugadores):
     """Ordena la lista de jugadores según la prioridad de posición definida."""
-    # El valor 99 se usa si la posición no está en el diccionario, poniéndolo al final
     return sorted(jugadores, key=lambda p: POSICION_ORDEN.get(p.posicion, 99))
 
 # =========================================
@@ -107,7 +104,7 @@ def login():
     return render_template('login.html')
 
 # =========================================
-# REGISTRO (CON MANEJO DE ERROR 500)
+# REGISTRO (CON MANEJO DE ERROR Y LONGITUD DE HASH CORRECTA)
 # =========================================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -134,14 +131,13 @@ def register():
             return redirect(url_for('login'))
             
         except SQLAlchemyError as e:
-            # Captura errores de la DB (ej: conexión perdida, datos inválidos)
+            # Captura errores de la DB
             db.session.rollback()
-            # Imprime el error real en los logs de Render para depuración
             print(f"FATAL DB ERROR DURANTE REGISTRO: {e}") 
             flash("❌ Error de la base de datos al registrar. Por favor, inténtalo de nuevo.", "error")
             return redirect(url_for('register'))
         except Exception as e:
-            # Captura cualquier otro error de Python (ej: error al hashear)
+            # Captura cualquier otro error de Python
             db.session.rollback()
             print(f"FATAL PYTHON ERROR DURANTE REGISTRO: {e}") 
             flash("❌ Error interno del servidor. Revisa los logs de Render.", "error")
@@ -170,7 +166,6 @@ def modo_carrera():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    message = None
     
     if request.method == 'POST':
         try:
@@ -217,7 +212,6 @@ def modo_carrera():
             
         return render_template('modo_carrera.html', players=players_data, username=session.get('usuario', 'Manager'))
     except OperationalError as e:
-        # Este error es el que estabas viendo: fallo de conexión a la DB
         flash("❌ Error al cargar la plantilla. La base de datos no está disponible. Asegúrate de que DATABASE_URL esté configurada correctamente.", "error")
         print(f"Database Load Operational Error: {e}")
         return redirect(url_for('home'))
@@ -247,7 +241,6 @@ def actualizar_jugador(player_id):
         flash("❌ Debes iniciar sesión para realizar esta acción", "error")
         return redirect(url_for('login'))
 
-    # Se corrige la sintaxis de la URL de Flask a <int:player_id>
     jugador = Jugador.query.filter_by(id=player_id, user_id=session['user_id']).first()
     if jugador and request.method == 'POST':
         try:
@@ -289,6 +282,9 @@ def partidos():
 # EJECUCIÓN LOCAL
 # =========================================
 if __name__ == '__main__': 
+    with app.app_context():
+        db.create_all() 
+    app.run(host='0.0.0.0', port=5000, debug=True)
     with app.app_context():
         # En producción, esta línea solo crea las tablas la primera vez que se ejecuta.
         db.create_all() 
