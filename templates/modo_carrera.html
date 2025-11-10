@@ -17,7 +17,6 @@
         <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2 text-blue-600">Añadir Nuevo Jugador</h2>
         
         <form method="POST" action="/modo_carrera" class="space-y-4">
-            
             <div>
                 <label for="position" class="block text-sm font-medium text-gray-700">Posición</label>
                 <select id="position" name="position" required
@@ -111,7 +110,6 @@
                     {% for player in players %}
                     <tr class="hover:bg-gray-50 transition duration-150" data-player-id="{{ player.id }}">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ player.name }}</td>
-                        
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                 {% if player.position in ['POR'] %} bg-blue-100 text-blue-800
@@ -122,7 +120,6 @@
                                 {{ player.position }}
                             </span>
                         </td>
-                        
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-center">
                             <span class="
                                 {% if player.grl | int < 50 %} text-red-600 
@@ -134,19 +131,16 @@
                                 {{ player.grl }}
                             </span>
                         </td>
-                        
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ player.age }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ player.market_value }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ player.salary }}</td>
-                        
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick="openEditModal('{{ player.id }}', '{{ player.name }}', '{{ player.position }}', '{{ player.grl }}', '{{ player.age }}', '{{ player.market_value }}', '{{ player.salary }}')"
                                     class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-150 hover:underline">
                                 Modificar
                             </button>
                             <form method="POST" action="/eliminar_jugador/{{ player.id }}" class="inline-block" onsubmit="return confirm('¿Estás seguro de que quieres vender/eliminar a {{ player.name }}?')">
-                                <button type="submit" name="action" value="delete"
-                                        class="text-red-600 hover:text-red-900 transition duration-150 hover:underline">
+                                <button type="submit" class="text-red-600 hover:text-red-900 transition duration-150 hover:underline">
                                     Eliminar
                                 </button>
                             </form>
@@ -170,7 +164,6 @@
         
         <form method="POST" action="" id="editPlayerForm" class="space-y-4">
             <input type="hidden" name="action" value="update">
-            
             <div>
                 <label for="edit_position" class="block text-sm font-medium text-gray-700">Nueva Posición</label>
                 <select id="edit_position" name="position" required
@@ -192,31 +185,26 @@
                     <option value="ED">Extremo Der. (ED)</option>
                 </select>
             </div>
-            
             <div>
                 <label for="edit_grl" class="block text-sm font-medium text-gray-700">Nuevo GRL (1-99)</label>
                 <input type="number" id="edit_grl" name="grl" required min="1" max="99" 
                         class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
             </div>
-
             <div>
                 <label for="edit_age" class="block text-sm font-medium text-gray-700">Nueva Edad</label>
                 <input type="number" id="edit_age" name="age" required min="16" max="45" 
                         class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
             </div>
-            
             <div>
                 <label for="edit_market_value" class="block text-sm font-medium text-gray-700">Nuevo Valor de Mercado (€)</label>
                 <input type="text" id="edit_market_value" name="market_value" required placeholder="Ej: 5M o 100K"
                         class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
             </div>
-            
             <div>
                 <label for="edit_salary" class="block text-sm font-medium text-gray-700">Nuevo Salario Semanal (€)</label>
                 <input type="text" id="edit_salary" name="salary" required placeholder="Ej: 50K"
-                        class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:focus:border-blue-500">
+                        class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
             </div>
-            
             <div class="flex justify-end pt-4 border-t mt-4">
                 <button type="button" onclick="closeEditModal()"
                         class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2 transition duration-150">
@@ -233,18 +221,13 @@
 
 <script>
     function openEditModal(playerId, playerName, position, grl, age, marketValue, salary) {
-        // 1. Configurar el título y la acción del formulario
         document.getElementById('editModalTitle').textContent = `Modificar a ${playerName}`;
         document.getElementById('editPlayerForm').action = `/actualizar_jugador/${playerId}`;
-        
-        // 2. Rellenar los campos del modal con los datos actuales del jugador
         document.getElementById('edit_position').value = position;
         document.getElementById('edit_grl').value = grl;
         document.getElementById('edit_age').value = age;
         document.getElementById('edit_market_value').value = marketValue;
         document.getElementById('edit_salary').value = salary;
-
-        // 3. Mostrar el modal
         document.getElementById('editModal').classList.remove('hidden');
     }
 
